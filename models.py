@@ -3,6 +3,27 @@ from datetime import datetime, timedelta
 from typing import Literal
 import uuid
 
+class CommonQueryParams:
+    def __init__(self, q: str | None = None, offset: int = 0, limit: int = 10):
+        self.q = q
+        self.offset = offset
+        self.limit = limit
+
+class BaseDependancies:
+    def __init__(self, x_system_id: str | None = None):
+        self.x_system_id = x_system_id
+
+
+class User(BaseModel):
+    email: str | None = None
+    username: str
+    full_name: str | None = None
+    disabled: bool | None = None
+
+class UserInDB(User):
+    hashed_password: str
+
+
 class BaseTransaction(BaseModel):
     amount: int | float
     category: str = 'another'
@@ -34,10 +55,6 @@ class Category(BaseModel):
 
 
 class CategoriesFilterParams(BaseModel):
-    model_config = {"extra": "forbid"}
-
-    limit: int = Field(100, gt=0, le = 100)
-    offset: int = Field(0, ge=0)
     order_by: Literal["created_at", "updated_at"] = "created_at"
 
 
@@ -84,3 +101,19 @@ mock_transactions = [
         description='Проект по автоматизации'
     ).model_dump(),
 ]
+
+mock_users = {"alexatom": {
+                "email":"alex@gmail.com", 
+                "username":"alexatom", 
+                "hashed_password": "fakehashedsecret",
+                "full_name":"Alex Ivanov", 
+                "disabled":False
+                },
+            "aprilluna": {
+                "email":"april@gmail.com", 
+                "username":"aprilluna",
+                "hashed_password":"fakehashedsecret2",
+                "full_name":"April Luna", 
+                "disabled":True
+            }
+}

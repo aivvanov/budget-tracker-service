@@ -1,15 +1,21 @@
-from fastapi import FastAPI, Query, Path, Body, Cookie, Header, status, HTTPException, Form, UploadFile, File, Response, Request
+from fastapi import FastAPI, Query, Path, Body, Cookie, Header, status, HTTPException, Form, UploadFile, File, Response, Request, Depends, dependencies
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from typing import Annotated, Any
-from models import BaseTransaction, UpdateTransaction, TransactionOut, Category, CategoriesFilterParams, CommonHeaders, FormDataIn, FormDataOut, mock_transactions
+from models import BaseTransaction, UpdateTransaction, TransactionOut, Category, CategoriesFilterParams, CommonHeaders, FormDataIn, FormDataOut, mock_transactions, CommonQueryParams, BaseDependancies, User, UserInDB, mock_users
+from auth import oauth2_scheme, get_curr_user, get_curr_active_user, OAuth2PasswordRequestForm, fake_hash_password
 
-app = FastAPI()
+app = FastAPI(dependencies=[Depends(BaseDependancies)])
 
 class ValidationException(Exception):
     def __init__(self, field: str, min_length: int):
         self.field = field
         self.min_length = min_length
+
+# async def common_parameters(q: str | None = None, skip: Annotated[int, Query(deprecated = True, title = 'Offset of lost')] = 0, limit: int = 10):
+#    return {"q": q, "skip": skip, "limit": limit}
+
+# CommonsDep = Annotated[dict, Depends(common_parameters)]
 
 
 @app.exception_handler(ValidationException)
@@ -25,10 +31,10 @@ async def unicorn_exception_handler(request: Request, exc: ValidationException):
         summary="Get transactions",
         description="Get all transaction"
         )
-async def get_transactions(skip: Annotated[int, Query(deprecated = True, title = 'Offset of lost')] = 0, 
-                           limit: int = 10
+async def get_transactions(commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
+                            token: Annotated[str, Depends(oauth2_scheme)]
                            ) -> list[TransactionOut]:
-    return mock_transactions[skip : skip + limit]
+    return mock_transactions[commons.offset : commons.offset + commons.limit]
 
 
 @app.get('/transactions/{trx_id}', tags=["transactions"])
@@ -79,7 +85,9 @@ async def update_item(trx_id: str, trx: UpdateTransaction):
 @app.get('/categories', tags=["categories"])
 async def get_category(filter_query: Annotated[CategoriesFilterParams, Query()],
                           headers: Annotated[CommonHeaders, Header()],
-                          ads_id: Annotated[str | None, Cookie()] = None):
+                          commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
+                          ads_id: Annotated[str | None, Cookie()] = None
+                          ):
     return headers
 
 
@@ -91,23 +99,43 @@ async def create_category(category: Category, importance: Annotated[int | None, 
     return result
 
 
-@app.post("/login", tags=["auth"])
-async def login(data: Annotated[FormDataIn, Form()]) -> FormDataOut:
-    creds = data.model_dump()
+# @app.post("/login", tags=["auth"])
+# async def login(data: Annotated[FormDataIn, Form()]) -> FormDataOut:
+#     creds = data.model_dump()
 
-    validation_rules = {
-        "username": 3,
-        "password": 10
-    }
+#     validation_rules = {
+#         "username": 3,
+#         "password": 10
+#     }
 
-    for field, min_len in validation_rules.items():
-        if len(creds[field]) <= min_len:
-            raise ValidationException(field, min_len)
+#     for field, min_len in validation_rules.items():
+#         if len(creds[field]) <= min_len:
+#             raise ValidationException(field, min_len)
 
-    return FormDataOut(username=data.username)
+#     return FormDataOut(username=data.username)
 
 
 @app.post("/file", tags=["files"])
 async def upload_file(file: Annotated[UploadFile, File()]):
     content = await file.read()
     return Response(content=content, media_type="application/octet-stream")
+
+
+@app.get("/users/me",  tags=["auth"])
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_curr_active_user)],
+):
+    return current_user
+
+
+@app.post("/token")
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    user_dict = mock_users.get(form_data.username)
+    if not user_dict:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    user = UserInDB(**user_dict)
+    hashed_password = fake_hash_password(form_data.password)
+    if not hashed_password == user.hashed_password:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    return {"access_token": user.username, "token_type": "bearer"}
