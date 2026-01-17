@@ -2,8 +2,9 @@ from fastapi import FastAPI, Query, Path, Body, Cookie, Header, status, HTTPExce
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from typing import Annotated, Any
-from models import BaseTransaction, UpdateTransaction, TransactionOut, Category, CategoriesFilterParams, CommonHeaders, FormDataIn, FormDataOut, mock_transactions, CommonQueryParams, BaseDependancies, User, UserInDB, mock_users
-from auth import oauth2_scheme, get_curr_user, get_curr_active_user, OAuth2PasswordRequestForm, fake_hash_password
+from datetime import timedelta
+from models import BaseTransaction, UpdateTransaction, TransactionOut, Category, CategoriesFilterParams, CommonHeaders, FormDataIn, FormDataOut, mock_transactions, CommonQueryParams, BaseDependancies, User, UserInDB, mock_users, Token
+from auth import oauth2_scheme, get_curr_active_user, OAuth2PasswordRequestForm, authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
 app = FastAPI(dependencies=[Depends(BaseDependancies)])
 
@@ -121,21 +122,26 @@ async def upload_file(file: Annotated[UploadFile, File()]):
     return Response(content=content, media_type="application/octet-stream")
 
 
-@app.get("/users/me",  tags=["auth"])
+@app.get("/users/me",  response_model=User, tags=["auth"])
 async def read_users_me(
     current_user: Annotated[User, Depends(get_curr_active_user)],
 ):
     return current_user
 
 
-@app.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user_dict = mock_users.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    return {"access_token": user.username, "token_type": "bearer"}
+@app.post("/token", tags=["auth"])
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> Token:
+    user = authenticate_user(mock_users, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return Token(access_token=access_token, token_type="bearer")
