@@ -1,20 +1,33 @@
-import uuid
 from datetime import datetime
-from pydantic import BaseModel, Field
-
-class BaseTransaction(BaseModel):
-    amount: int | float
-    category: str = 'another'
-    date: datetime
-    description: str | None = Field(default=None, examples=["The zoo visiting"])
+from pydantic import BaseModel, Field, ConfigDict
 
 
-class TransactionOut(BaseTransaction):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+class TransactionCreate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
 
+    amount: float
+    currency: str = Field(default="USD")
+    category: str = Field(default="another", index=True)
+    description: str | None = Field(default=None)
 
-class UpdateTransaction(BaseModel):
-    amount: int | float | None = None
-    category: str | None = None
-    date: datetime | None = None
-    description: str | None = None
+class TransactionUpdate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    amount: float | None = Field(default=None)
+    currency: str | None = Field(default=None)
+    category: str | None = Field(default=None)
+    description: str | None = Field(default=None)
+
+class TransactionResponse(BaseModel):
+    id: int
+    amount: float
+    currency: str
+    category: str
+    description: str | None
+    created_at: datetime
+    updated_at: datetime | None
+
+class TransactionDeleteResponse(BaseModel):
+    trx_id: int
+    status: str = Field(default="success")
+    message: str = Field(default="Transaction deleted successfully")
