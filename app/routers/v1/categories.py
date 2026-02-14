@@ -1,16 +1,16 @@
 from typing import Annotated
 from datetime import datetime, timezone
-from fastapi import APIRouter, Query, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path # , Query
 from sqlmodel import select
-from app.core.dependencies.dep import CommonHeaders
-from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryDeleteResponse, CategoriesFilterParams, CategoryImage, db_to_category_response
+# from app.core.dependencies.dep import CommonHeaders
+from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryDeleteResponse, db_to_category_response # , CategoriesFilterParams, CategoryImage
 from app.models.category import Category
 from app.core.dependencies.dep import CommonQueryParams
 from app.db.session import SessionDep
 from app.auth.security import oauth2_scheme
 
 router = APIRouter(
-    prefix="/categories",
+    prefix="/v1/categories",
     tags=["categories"]
 )
 
