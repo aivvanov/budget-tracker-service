@@ -1,5 +1,9 @@
 from pwdlib import PasswordHash
-from .schemas import UserInDB
+from sqlmodel import select
+from app.schemas.user import UserInDB
+from app.db.session import SessionDep
+from app.models.user import User
+
 
 password_hash = PasswordHash.recommended()
 
@@ -13,15 +17,21 @@ def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
 
-def get_user(db, username: str):
-    """Get a users from database"""
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def get_user(session: SessionDep, email: str) -> User | None:
+    """Get a user from database by email"""
+    statement = select(User).where(User.email == email)
+    user = session.exec(statement).first()
+    return user
 
-def authenticate_user(db, username: str, password: str) -> UserInDB | None:
+def get_user_by_username(session: SessionDep, username: str) -> User | None:
+    """Get a user from database by username"""
+    statement = select(User).where(User.username == username)
+    user = session.exec(statement).first()
+    return user
+
+def authenticate_user(session: SessionDep, username: str, password: str) -> User | None:
     """Authenticate user using his password"""
-    user = get_user(db, username)
+    user = get_user_by_username(session, username)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

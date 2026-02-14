@@ -11,7 +11,7 @@ from app.auth.security import oauth2_scheme
 
 
 router = APIRouter(
-    prefix="/transactions",
+    prefix="/v1/transactions",
     tags=["transactions"]
 )
 
