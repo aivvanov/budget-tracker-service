@@ -1,11 +1,13 @@
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel, HttpUrl, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict #, HttpUrl
 from app.models.category import Category
 
 
 class CategoryImage(BaseModel):
-    url: HttpUrl = Field(default="https://cdn-icons-png.flaticon.com/512/6475/6475885.png")
+    # TO DO: create TypeDecorator for HttpUrl validation
+    #url: HttpUrl = Field(default="https://example.com/icon.png")
+    url: str = Field(default="https://example.com/icon.png")
     name: str
 
 class CategoryCreate(BaseModel):

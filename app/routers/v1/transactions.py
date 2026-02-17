@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlmodel import select
 from app.models.transaction import Transaction
+from app.models.category import Category
 from app.schemas.transaction import TransactionResponse, TransactionCreate
 from app.schemas.transaction import TransactionUpdate, TransactionDeleteResponse
 from app.core.dependencies.dep import CommonQueryParams
@@ -53,6 +54,11 @@ async def add_transaction(
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> TransactionResponse:
+
+    category = session.get(Category, transaction.category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
     db_transaction = Transaction.from_orm(transaction)
     db_transaction.created_at = datetime.now(timezone.utc)
     db_transaction.updated_at = None
@@ -65,13 +71,17 @@ async def add_transaction(
 
 @router.patch('/{trx_id}')
 async def update_transaction(
-    trx_id: str, trx: TransactionUpdate,
+    trx_id: str, 
+    trx: TransactionUpdate,
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> TransactionResponse:
     trx_db = session.get(Transaction, trx_id)
     if not trx_db:
         raise HTTPException(status_code=404, detail="Transaction not found")
+
+    if trx.category_id and not session.get(Category, trx.category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
 
     trx_data = trx.model_dump(exclude_unset=True, exclude=None)
     trx_db.updated_at = datetime.now(timezone.utc)

@@ -78,7 +78,6 @@ async def delete_category(
     session.commit()
     return CategoryDeleteResponse(category_id=id)
 
-#TO DO: fix an ability to update icon info
 @router.patch('/{trx_id}')
 async def update_category(
     id: str, 
@@ -92,6 +91,7 @@ async def update_category(
 
     category_data = category.model_dump(exclude_unset=True, exclude=None)
     category_db.updated_at = datetime.now(timezone.utc)
+    category_db.icon_url, category_db.icon_name = category_data["icon"]["url"], category_data["icon"]["name"]
     category_db.sqlmodel_update(category_data)
 
     session.add(category_db)
