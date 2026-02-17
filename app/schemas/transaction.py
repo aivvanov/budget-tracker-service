@@ -7,7 +7,7 @@ class TransactionCreate(BaseModel):
 
     amount: float
     currency: str = Field(default="USD")
-    category: str = Field(default="another", index=True)
+    category_id: int = Field(default=1, index=True)
     description: str | None = Field(default=None)
 
 class TransactionUpdate(BaseModel):
@@ -15,14 +15,14 @@ class TransactionUpdate(BaseModel):
 
     amount: float | None = Field(default=None)
     currency: str | None = Field(default=None)
-    category: str | None = Field(default=None)
+    category_id: int | None = Field(default=None)
     description: str | None = Field(default=None)
 
 class TransactionResponse(BaseModel):
     id: int
     amount: float
     currency: str
-    category: str
+    category_id: int
     description: str | None
     created_at: datetime
     updated_at: datetime | None
