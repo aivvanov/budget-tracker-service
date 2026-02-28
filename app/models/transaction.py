@@ -9,6 +9,7 @@ class Transaction(SQLModel, table=True):
     currency: str = Field(default="USD")
     category_id: int | None = Field(default=None, foreign_key="category.id")
     description: str | None = Field(default=None)
+    user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime | None = Field(default=None)
     

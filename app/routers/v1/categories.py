@@ -8,6 +8,7 @@ from app.models.category import Category
 from app.core.dependencies.dep import CommonQueryParams
 from app.db.session import SessionDep
 from app.auth.security import oauth2_scheme
+from app.auth.dependencies import get_curr_user
 
 router = APIRouter(
     prefix="/v1/categories",
@@ -21,8 +22,14 @@ async def get_categories(
     token: Annotated[str, Depends(oauth2_scheme)],
     session: SessionDep
 ) -> list[CategoryResponse]:
+
+    curr_user = await get_curr_user(token, session)
+    if not curr_user:
+        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
+
     categories = session.exec(
         select(Category)
+        .where(Category.user_id == curr_user.id)
         .offset(commons.offset)
         .limit(commons.limit)
     ).all()
@@ -35,7 +42,18 @@ async def get_category(
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> CategoryResponse:
-    category = session.get(Category, id)
+
+    curr_user = await get_curr_user(token, session)
+    if not curr_user:
+        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
+
+    category = session.exec(
+        select(Category)
+        .where(
+            Category.id == id,
+            Category.user_id == curr_user.id
+        )
+    ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
@@ -50,11 +68,27 @@ async def add_category(
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> CategoryResponse:
+
+    curr_user = await get_curr_user(token, session)
+    if not curr_user:
+        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
+
+    user_category = session.exec(
+        select(Category)
+        .where(
+            Category.name == category.name,
+            Category.user_id == curr_user.id
+        )
+    ).first()
+    if user_category:
+        raise HTTPException(status_code=400, detail=f'Category with name "{user_category.name}" already exists')
+
     db_category = Category(
         name=category.name,
         icon_url=str(category.icon.url),
         icon_name=category.icon.name,
-        is_income=category.is_income
+        is_income=category.is_income,
+        user_id=curr_user.id
     )
     db_category.created_at = datetime.now(timezone.utc)
     db_category.updated_at = None
@@ -65,19 +99,6 @@ async def add_category(
 
     return db_to_category_response(db_category)
 
-@router.delete("/{trx_id}")
-async def delete_category(
-    id: int,
-    session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> CategoryDeleteResponse:
-    category = session.get(Category, id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
-    session.delete(category)
-    session.commit()
-    return CategoryDeleteResponse(category_id=id)
-
 @router.patch('/{trx_id}')
 async def update_category(
     id: str, 
@@ -85,7 +106,18 @@ async def update_category(
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> CategoryResponse:
-    category_db = session.get(Category, id)
+
+    curr_user = await get_curr_user(token, session)
+    if not curr_user:
+        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
+
+    category_db = session.exec(
+        select(Category)
+        .where(
+            Category.id == id,
+            Category.user_id == curr_user.id
+        )
+    ).first()
     if not category_db:
         raise HTTPException(status_code=404, detail="Category not found")
 
@@ -99,6 +131,31 @@ async def update_category(
     session.refresh(category_db)
 
     return db_to_category_response(category_db)
+
+@router.delete("/{trx_id}")
+async def delete_category(
+    trx_id: Annotated[int, Path],
+    session: SessionDep,
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> CategoryDeleteResponse:
+
+    curr_user = await get_curr_user(token, session)
+    if not curr_user:
+        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
+
+    category = session.exec(
+        select(Category)
+        .where(
+            Category.id == trx_id,
+            Category.user_id == curr_user.id
+        )
+    ).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    session.delete(category)
+    session.commit()
+    return CategoryDeleteResponse(category_id=trx_id)
 
 # @router.post(
 #     "/file", 
