@@ -4,30 +4,30 @@ from pydantic import BaseModel, Field, ConfigDict #, HttpUrl
 from app.models.category import Category
 
 
-class CategoryImage(BaseModel):
-    # TO DO: create TypeDecorator for HttpUrl validation
-    #url: HttpUrl = Field(default="https://example.com/icon.png")
-    url: str = Field(default="https://example.com/icon.png")
-    name: str
+# class CategoryImage(BaseModel):
+#     # TO DO: create TypeDecorator for HttpUrl validation
+#     #url: HttpUrl = Field(default="https://example.com/icon.png")
+#     url: str = Field(default="https://example.com/icon.png")
+#     name: str
 
 class CategoryCreate(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     name: str | None
-    icon: CategoryImage | None
+    icon_url: str = Field(default="https://example.com/icon.png")
     is_income: bool | None
 
 class CategoryUpdate(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     name: str = Field(default=None)
-    icon: CategoryImage = Field(default=None)
+    icon_url: str = Field(default="https://example.com/icon.png")
     is_income: bool = Field(default=None)
 
 class CategoryResponse(BaseModel):
     id: int
     name: str
-    icon: CategoryImage
+    icon_url: str
     is_income: bool
     created_at: datetime
     updated_at: datetime | None
@@ -46,7 +46,7 @@ def db_to_category_response(category: Category) -> CategoryResponse:
     return CategoryResponse(
         id=category.id,
         name=category.name,
-        icon=CategoryImage(url=category.icon_url, name=category.icon_name),
+        icon_url=category.icon_url,
         is_income=category.is_income,
         created_at=category.created_at,
         updated_at=category.updated_at

@@ -5,7 +5,7 @@ from .core.dependencies.validation import ValidationException
 from .core.dependencies.handlers import validation_exception_handler
 from .core.dependencies.dep import BaseDependancies
 from .auth import routes
-from .routers.v1 import transactions, categories, users
+from .routers.v1 import transactions, categories, users, accounts
 
 app = FastAPI(dependencies=[Depends(BaseDependancies)])
 
@@ -23,3 +23,4 @@ app.include_router(routes.router)
 app.include_router(transactions.router)
 app.include_router(categories.router)
 app.include_router(users.router)
+app.include_router(accounts.router)

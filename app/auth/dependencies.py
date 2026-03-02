@@ -34,6 +34,10 @@ async def get_curr_user(
         raise credentials_exception
     return user
 
+async def get_current_user_id(current_user: Annotated[UserBase, Depends(get_curr_user)]) -> int:
+    if not current_user.id:
+        raise HTTPException(status_code=401, detail="Could not identify user")
+    return current_user.id
 
 async def get_curr_active_user(current_user: Annotated[UserBase, Depends(get_curr_user)]):
     """Get current active user"""
