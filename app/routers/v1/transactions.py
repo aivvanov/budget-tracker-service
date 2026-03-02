@@ -9,7 +9,8 @@ from app.schemas.transaction import TransactionUpdate, TransactionDeleteResponse
 from app.core.dependencies.dep import CommonQueryParams
 from app.db.session import SessionDep
 from app.auth.security import oauth2_scheme
-from app.auth.dependencies import get_curr_user
+from app.auth.dependencies import get_current_user_id
+from app.models.account import Account
 
 
 router = APIRouter(
@@ -26,16 +27,12 @@ router = APIRouter(
 async def get_transactions(
     commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: SessionDep
+    session: SessionDep,
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> list[TransactionResponse]:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
-
     return session.exec(
         select(Transaction)
-        .where(Transaction.user_id == curr_user.id)
+        .where(Transaction.user_id == user_id)
         .offset(commons.offset)
         .limit(commons.limit)
     ).all()
@@ -44,18 +41,15 @@ async def get_transactions(
 async def get_transaction(
     trx_id: Annotated[str, Path(title='The ID of the transaction to get')],
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> TransactionResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     transaction = session.exec(
         select(Transaction)
         .where(
             Transaction.id == trx_id,
-            Transaction.user_id == curr_user.id
+            Transaction.user_id == user_id
         )
     ).first()
     if not transaction:
@@ -70,22 +64,29 @@ async def get_transaction(
 async def add_transaction(
     transaction: TransactionCreate,
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> TransactionResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
     
     category = session.exec(
         select(Category)
         .where(
             Category.id == transaction.category_id,
-            Category.user_id == curr_user.id
+            Category.user_id == user_id
         )
     ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
+
+    account = session.exec(
+        select(Category)
+        .where(
+            Account.id == transaction.account_id,
+            Account.user_id == user_id
+        )
+    ).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
 
 
     db_transaction = Transaction(
@@ -93,7 +94,8 @@ async def add_transaction(
         currency=transaction.currency,
         description=transaction.description,
         category_id=transaction.category_id,
-        user_id=curr_user.id,
+        account_id=transaction.account_id,
+        user_id=user_id,
         created_at=datetime.now(timezone.utc),
         updated_at=None
     )
@@ -106,21 +108,18 @@ async def add_transaction(
 
 @router.patch('/{trx_id}')
 async def update_transaction(
-    trx_id: str, 
+    trx_id: Annotated[str, Path], 
     trx: TransactionUpdate,
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> TransactionResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     trx_db = session.exec(
         select(Transaction)
         .where(
             Transaction.id == trx_id,
-            Transaction.user_id == curr_user.id
+            Transaction.user_id == user_id
         )
     ).first()
     if not trx_db:
@@ -128,6 +127,9 @@ async def update_transaction(
 
     if trx.category_id and not session.get(Category, trx.category_id):
         raise HTTPException(status_code=404, detail="Category not found")
+
+    if trx.account_id and not session.get(Account, trx.account_id):
+        raise HTTPException(status_code=404, detail="Account not found")
 
     trx_data = trx.model_dump(exclude_unset=True, exclude=None)
     trx_db.updated_at = datetime.now(timezone.utc)
@@ -141,20 +143,17 @@ async def update_transaction(
 
 @router.delete("/{trx_id}")
 async def delete_transaction(
-    trx_id: int,
+    trx_id: Annotated[int, Path],
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> TransactionDeleteResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     transaction = session.exec(
         select(Transaction)
         .where(
             Transaction.id == trx_id,
-            Transaction.user_id == curr_user.id
+            Transaction.user_id == user_id
         )
     ).first()
     if not transaction:

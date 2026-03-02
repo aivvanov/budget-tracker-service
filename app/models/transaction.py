@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlmodel import Field, SQLModel, Relationship
 from app.models.category import Category
+from app.models.account import Account
 
 
 class Transaction(SQLModel, table=True):
@@ -8,10 +9,12 @@ class Transaction(SQLModel, table=True):
     amount: float
     currency: str = Field(default="USD")
     category_id: int | None = Field(default=None, foreign_key="category.id")
+    account_id: int | None = Field(default=None, foreign_key="account.id")
     description: str | None = Field(default=None)
     user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime | None = Field(default=None)
     
     category_rel: Category | None = Relationship(back_populates="transactions")
+    account_rel: Account | None = Relationship(back_populates="transactions")
 

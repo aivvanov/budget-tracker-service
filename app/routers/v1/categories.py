@@ -8,7 +8,7 @@ from app.models.category import Category
 from app.core.dependencies.dep import CommonQueryParams
 from app.db.session import SessionDep
 from app.auth.security import oauth2_scheme
-from app.auth.dependencies import get_curr_user
+from app.auth.dependencies import get_current_user_id
 
 router = APIRouter(
     prefix="/v1/categories",
@@ -20,16 +20,13 @@ async def get_categories(
     commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
     #filter_query: Annotated[CategoriesFilterParams, Query()],
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: SessionDep
+    session: SessionDep,
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> list[CategoryResponse]:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     categories = session.exec(
         select(Category)
-        .where(Category.user_id == curr_user.id)
+        .where(Category.user_id == user_id)
         .offset(commons.offset)
         .limit(commons.limit)
     ).all()
@@ -40,18 +37,15 @@ async def get_categories(
 async def get_category(
     id: Annotated[str, Path(title='The ID of the category to get')],
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> CategoryResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     category = session.exec(
         select(Category)
         .where(
             Category.id == id,
-            Category.user_id == curr_user.id
+            Category.user_id == user_id
         )
     ).first()
     if not category:
@@ -66,18 +60,15 @@ async def get_category(
 async def add_category(
     category: CategoryCreate,
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> CategoryResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     user_category = session.exec(
         select(Category)
         .where(
             Category.name == category.name,
-            Category.user_id == curr_user.id
+            Category.user_id == user_id
         )
     ).first()
     if user_category:
@@ -85,10 +76,9 @@ async def add_category(
 
     db_category = Category(
         name=category.name,
-        icon_url=str(category.icon.url),
-        icon_name=category.icon.name,
+        icon_url=category.icon_url,
         is_income=category.is_income,
-        user_id=curr_user.id
+        user_id=user_id
     )
     db_category.created_at = datetime.now(timezone.utc)
     db_category.updated_at = None
@@ -99,23 +89,20 @@ async def add_category(
 
     return db_to_category_response(db_category)
 
-@router.patch('/{trx_id}')
+@router.patch('/{id}')
 async def update_category(
     id: str, 
     category: CategoryUpdate,
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> CategoryResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     category_db = session.exec(
         select(Category)
         .where(
             Category.id == id,
-            Category.user_id == curr_user.id
+            Category.user_id == user_id
         )
     ).first()
     if not category_db:
@@ -123,7 +110,7 @@ async def update_category(
 
     category_data = category.model_dump(exclude_unset=True, exclude=None)
     category_db.updated_at = datetime.now(timezone.utc)
-    category_db.icon_url, category_db.icon_name = category_data["icon"]["url"], category_data["icon"]["name"]
+    category_db.icon_url = category.icon_url
     category_db.sqlmodel_update(category_data)
 
     session.add(category_db)
@@ -132,22 +119,19 @@ async def update_category(
 
     return db_to_category_response(category_db)
 
-@router.delete("/{trx_id}")
+@router.delete("/{id}")
 async def delete_category(
-    trx_id: Annotated[int, Path],
+    id: Annotated[int, Path],
     session: SessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> CategoryDeleteResponse:
-
-    curr_user = await get_curr_user(token, session)
-    if not curr_user:
-        raise HTTPException(status_code=400, detail="Error accured while getting user identifier")
 
     category = session.exec(
         select(Category)
         .where(
-            Category.id == trx_id,
-            Category.user_id == curr_user.id
+            Category.id == id,
+            Category.user_id == user_id
         )
     ).first()
     if not category:
@@ -155,7 +139,7 @@ async def delete_category(
 
     session.delete(category)
     session.commit()
-    return CategoryDeleteResponse(category_id=trx_id)
+    return CategoryDeleteResponse(category_id=id)
 
 # @router.post(
 #     "/file", 
