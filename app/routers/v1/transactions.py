@@ -11,13 +11,15 @@ from app.db.session import SessionDep
 from app.auth.security import oauth2_scheme
 from app.auth.dependencies import get_current_user_id
 from app.models.account import Account
-
+from app.services.transaction import change_acc_balance
 
 router = APIRouter(
     prefix="/v1/transactions",
     tags=["transactions"]
 )
 
+
+# TO DO: add get ('/summary') router
 
 @router.get(
     '/',
@@ -79,7 +81,7 @@ async def add_transaction(
         raise HTTPException(status_code=404, detail="Category not found")
 
     account = session.exec(
-        select(Category)
+        select(Account)
         .where(
             Account.id == transaction.account_id,
             Account.user_id == user_id
@@ -88,10 +90,13 @@ async def add_transaction(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
+    current_acc_balance = await change_acc_balance(transaction.account_id, transaction.amount, category.is_income, session)
+    if not current_acc_balance:
+        raise HTTPException(status_code=404, detail="Could not withdraw the input from the account")
 
     db_transaction = Transaction(
         amount=transaction.amount,
-        currency=transaction.currency,
+        currency=account.currency,
         description=transaction.description,
         category_id=transaction.category_id,
         account_id=transaction.account_id,

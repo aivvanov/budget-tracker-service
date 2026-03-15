@@ -6,7 +6,6 @@ class TransactionCreate(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     amount: float
-    currency: str = Field(default="USD")
     category_id: int = Field(default=1, index=True)
     account_id: int = Field(default=1, index=True)
     description: str | None = Field(default=None)

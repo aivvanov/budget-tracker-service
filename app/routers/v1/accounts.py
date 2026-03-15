@@ -8,6 +8,7 @@ from app.core.dependencies.dep import CommonQueryParams
 from app.schemas.account import AccountResponse, AccountCreate, AccountUpdate, AccountDeleteResponse
 from app.auth.dependencies import get_current_user_id
 from app.models.account import Account
+from app.services.exchange_rate import get_currency_from_db
 
 router = APIRouter(
     prefix="/v1/accounts",
@@ -59,8 +60,11 @@ async def add_account(
     user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> AccountResponse:
 
+    currency_db = get_currency_from_db(account.currency, session)
+    if not currency_db:
+        raise HTTPException(status_code=404, detail=f"Currency {account.currency} is not supported.")
+
     db_account = Account(
-        
         name=account.name,
         amount=account.amount,
         currency=account.currency,
