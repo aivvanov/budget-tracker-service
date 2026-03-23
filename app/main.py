@@ -11,6 +11,11 @@ from .routers.v1 import transactions, categories, users, accounts, currency
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database at startup
+    print("[startup] Initializing database...")
+    init_db()
+    print("[startup] Database initialized successfully")
+
     # Launch the scheduler at startup
     start_scheduler()
 
@@ -27,11 +32,6 @@ app = FastAPI(lifespan=lifespan, dependencies=[Depends(BaseDependancies)])
 
 app.middleware("http")(add_process_time_header)
 setup_cors(app)
-
-@app.on_event("startup")
-def on_startup():
-    """Initialize database on app startup."""
-    init_db()
 
 app.add_exception_handler(ValidationException, validation_exception_handler)
 

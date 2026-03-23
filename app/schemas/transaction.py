@@ -33,3 +33,10 @@ class TransactionDeleteResponse(BaseModel):
     trx_id: int
     status: str = Field(default="success")
     message: str = Field(default="Transaction deleted successfully")
+
+class TransactionSummary(BaseModel):
+    total_income: float
+    total_expense: float
+    currency: str
+    period_from: datetime
+    period_to: datetime

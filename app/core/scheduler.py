@@ -1,13 +1,15 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlmodel import Session
-from app.db.session import engine
+from app.db import session as db_session
 from app.services.exchange_rate import fetch_and_save_rates
 
 scheduler = AsyncIOScheduler()
 
 async def job_fetch_rates():
-    with Session(engine) as session:
+    if db_session.engine is None:
+        raise RuntimeError("Database engine not initialized yet")
+    with Session(db_session.engine) as session:
         try:
             await fetch_and_save_rates(session)
         except Exception as e:

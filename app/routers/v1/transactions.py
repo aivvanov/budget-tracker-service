@@ -1,10 +1,10 @@
 from typing import Annotated
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Path
-from sqlmodel import select
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
+from sqlmodel import select, func
 from app.models.transaction import Transaction
 from app.models.category import Category
-from app.schemas.transaction import TransactionResponse, TransactionCreate
+from app.schemas.transaction import TransactionResponse, TransactionCreate, TransactionSummary
 from app.schemas.transaction import TransactionUpdate, TransactionDeleteResponse
 from app.core.dependencies.dep import CommonQueryParams
 from app.db.session import SessionDep
@@ -18,8 +18,6 @@ router = APIRouter(
     tags=["transactions"]
 )
 
-
-# TO DO: add get ('/summary') router
 
 @router.get(
     '/',
@@ -38,6 +36,55 @@ async def get_transactions(
         .offset(commons.offset)
         .limit(commons.limit)
     ).all()
+
+
+# TO DO: Add default user's currency and do summarizing by it
+@router.get('/summary')
+async def get_trx_summary(
+    session: SessionDep,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[str, Depends(get_current_user_id)],
+    currency: str = Query(default="USD"), # TO DO Depends(get_current_user_default_curr)
+    date_from: datetime = Query(default=None),
+    date_to: datetime = Query(default=None),
+) -> TransactionSummary:
+
+    # Default piriod of time is current month
+    now = datetime.now(timezone.utc)
+    date_from = date_from or now.replace(day=1, hour=0, minute=0, second=0)
+    date_to = date_to or now
+
+    # Base filter
+    base_filter = [
+        Transaction.user_id == user_id,
+        Transaction.currency == currency, # TO DO: Get all transactions
+        Transaction.created_at >= date_from,
+        Transaction.created_at <= date_to
+    ]
+
+    # TO DO: Convert all trx currencies to default currency rate
+
+    income = session.exec(
+        select(func.sum(Transaction.amount))
+        .join(Category, Transaction.category_id == Category.id)
+        .where(*base_filter, Category.is_income == True)
+    ).one_or_none() or 0.0
+
+    expense = session.exec(
+        select(func.sum(Transaction.amount))
+        .join(Category, Transaction.category_id == Category.id)
+        .where(*base_filter, Category.is_income == False)
+    ).one_or_none() or 0.0
+
+    db_trx_summary = TransactionSummary(
+        total_income=income,
+        total_expense=expense,
+        currency=currency,
+        period_from=date_from,
+        period_to=date_to,
+    )
+
+    return db_trx_summary
 
 @router.get('/{trx_id}')
 async def get_transaction(
