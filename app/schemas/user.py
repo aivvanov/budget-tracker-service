@@ -6,13 +6,18 @@ class UserCreate(BaseModel):
     email: str | None = None
     username: str
     full_name: str | None = None
-    password: str 
+    password: str
+    default_currency: str | None = "USD"
 
 class UserBase(BaseModel):
     email: str | None = None
     username: str
     full_name: str | None = None
     disabled: bool | None = None
+    default_currency: str | None = "USD"
 
 class UserInDB(UserBase):
     hashed_password: str
+
+class DefaultCurrencyUpdate(BaseModel):
+    default_currency: str

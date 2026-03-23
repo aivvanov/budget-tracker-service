@@ -6,4 +6,5 @@ class User(SQLModel, table=True):
     username: str
     full_name: str | None = None
     disabled: bool | None = Field(default=None, index=True)
+    default_currency: str | None = "USD"
     hashed_password: str

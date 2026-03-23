@@ -1,1 +1,8 @@
 fastapi[standard]
+sqlmodel>=0.0.37
+sqlalchemy>=2.0.14,<2.1.0
+pydantic>=2.0
+python-jose[cryptography]
+passlib[bcrypt]
+apscheduler>=3.10.0
+httpx>=0.23.0
