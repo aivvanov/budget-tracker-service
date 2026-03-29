@@ -56,3 +56,16 @@ def get_currency_from_db(currency, session: SessionDep) -> str:
         .where(ExchangeRate.to_currency == currency)
     ).first()
     return rate
+
+def convert_currency(
+    session: SessionDep,
+    amount: float,
+    from_currency: str,
+    to_currency: str
+) -> float | None:
+
+    if from_currency == to_currency:
+        return amount
+
+    rate = get_latest_rate(session, from_currency, to_currency)
+    return amount * rate if rate else None

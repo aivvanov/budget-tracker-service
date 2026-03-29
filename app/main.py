@@ -7,7 +7,7 @@ from .core.dependencies.validation import ValidationException
 from .core.dependencies.handlers import validation_exception_handler
 from .core.dependencies.dep import BaseDependancies
 from .auth import routes
-from .routers.v1 import transactions, categories, users, accounts, currency
+from .routers.v1 import transactions, categories, users, accounts, currency, analytics
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,8 +36,9 @@ setup_cors(app)
 app.add_exception_handler(ValidationException, validation_exception_handler)
 
 app.include_router(routes.router)
+app.include_router(analytics.router)
 app.include_router(transactions.router)
 app.include_router(categories.router)
-app.include_router(users.router)
 app.include_router(accounts.router)
 app.include_router(currency.router)
+app.include_router(users.router)
