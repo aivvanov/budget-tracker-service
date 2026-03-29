@@ -10,6 +10,7 @@ class TransactionCreate(BaseModel):
     account_id: int = Field(default=1, index=True)
     description: str | None = Field(default=None)
 
+
 class TransactionUpdate(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
@@ -18,6 +19,7 @@ class TransactionUpdate(BaseModel):
     category_id: int | None = Field(default=None)
     account_id: int | None = Field(default=None)
     description: str | None = Field(default=None)
+
 
 class TransactionResponse(BaseModel):
     id: int
@@ -29,14 +31,9 @@ class TransactionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None
 
+
 class TransactionDeleteResponse(BaseModel):
     trx_id: int
     status: str = Field(default="success")
     message: str = Field(default="Transaction deleted successfully")
 
-class TransactionSummary(BaseModel):
-    total_income: float
-    total_expense: float
-    currency: str
-    period_from: datetime
-    period_to: datetime

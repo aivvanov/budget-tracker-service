@@ -63,7 +63,8 @@ async def get_users(
     ).all()
 
 @router.patch(
-    '/external/users/default_currency'
+    '/external/users/default_currency',
+    summary="Change current user's default currency"
 )
 async def change_curr_user_default_currency(
     commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
