@@ -2,7 +2,6 @@ from typing import Annotated
 from sqlmodel import Session
 from fastapi import Depends
 
-
 SQLITE_FILE_NAME = "database.db"
 SQLITE_URL = f"sqlite:///{SQLITE_FILE_NAME}"
 

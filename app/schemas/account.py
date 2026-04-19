@@ -3,20 +3,22 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class AccountCreate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(default="unknown")
     amount: float
     currency: str = Field(default="USD")
     icon_url: str = Field(default=None, max_length=100)
 
+
 class AccountUpdate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(default="unknown")
     amount: float | None = Field(default=None)
     currency: str | None = Field(default=None)
     icon_url: str = Field(default=None, max_length=100)
+
 
 class AccountResponse(BaseModel):
     id: int
@@ -26,6 +28,7 @@ class AccountResponse(BaseModel):
     icon_url: str
     created_at: datetime
     updated_at: datetime | None
+
 
 class AccountDeleteResponse(BaseModel):
     id: int

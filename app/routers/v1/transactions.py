@@ -14,45 +14,43 @@ from app.auth.dependencies import get_current_user_id
 from app.models.account import Account
 from app.services.transaction import change_acc_balance
 
-
-router = APIRouter(
-    prefix="/v1/transactions",
-    tags=["transactions"]
-)
+router = APIRouter(prefix="/v1/transactions", tags=["transactions"])
 
 
 @router.get(
-    '/',
+    "/",
     summary="The method that returns all stored transactions from database.",
-    description="Get all transaction."
+    description="Get all transaction.",
 )
 async def get_transactions(
     commons: Annotated[CommonQueryParams, Depends(CommonQueryParams)],
     token: Annotated[str, Depends(oauth2_scheme)],
     session: SessionDep,
-    user_id: Annotated[str, Depends(get_current_user_id)]
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> list[TransactionResponse]:
     return session.exec(
         select(Transaction)
-        .where(Transaction.user_id == user_id)
+        .where(
+            Transaction.user_id == user_id,
+            Transaction.created_at >= commons.date_from,
+            Transaction.created_at <= commons.date_to,
+        )
         .offset(commons.offset)
         .limit(commons.limit)
     ).all()
 
 
-@router.get('/{trx_id}')
+@router.get("/{trx_id}")
 async def get_transaction(
-    trx_id: Annotated[str, Path(title='The ID of the transaction to get')],
+    trx_id: Annotated[str, Path(title="The ID of the transaction to get")],
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)],
-    user_id: Annotated[str, Depends(get_current_user_id)]
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> TransactionResponse:
 
     transaction = session.exec(
-        select(Transaction)
-        .where(
-            Transaction.id == trx_id,
-            Transaction.user_id == user_id
+        select(Transaction).where(
+            Transaction.id == trx_id, Transaction.user_id == user_id
         )
     ).first()
     if not transaction:
@@ -61,40 +59,37 @@ async def get_transaction(
     return transaction
 
 
-@router.post(
-    '/', 
-    status_code=status.HTTP_201_CREATED
-)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def add_transaction(
     transaction: TransactionCreate,
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)],
-    user_id: Annotated[str, Depends(get_current_user_id)]
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> TransactionResponse:
-    
+
     category = session.exec(
-        select(Category)
-        .where(
-            Category.id == transaction.category_id,
-            Category.user_id == user_id
+        select(Category).where(
+            Category.id == transaction.category_id, Category.user_id == user_id
         )
     ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     account = session.exec(
-        select(Account)
-        .where(
-            Account.id == transaction.account_id,
-            Account.user_id == user_id
+        select(Account).where(
+            Account.id == transaction.account_id, Account.user_id == user_id
         )
     ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    current_acc_balance = await change_acc_balance(transaction.account_id, transaction.amount, category.is_income, session)
+    current_acc_balance = await change_acc_balance(
+        transaction.account_id, transaction.amount, category.is_income, session
+    )
     if not current_acc_balance:
-        raise HTTPException(status_code=404, detail="Could not withdraw the input from the account")
+        raise HTTPException(
+            status_code=404, detail="Could not withdraw the input from the account"
+        )
 
     db_transaction = Transaction(
         amount=transaction.amount,
@@ -104,7 +99,7 @@ async def add_transaction(
         account_id=transaction.account_id,
         user_id=user_id,
         created_at=datetime.now(timezone.utc),
-        updated_at=None
+        updated_at=None,
     )
 
     session.add(db_transaction)
@@ -114,20 +109,18 @@ async def add_transaction(
     return db_transaction
 
 
-@router.patch('/{trx_id}')
+@router.patch("/{trx_id}")
 async def update_transaction(
-    trx_id: Annotated[str, Path], 
+    trx_id: Annotated[str, Path],
     trx: TransactionUpdate,
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)],
-    user_id: Annotated[str, Depends(get_current_user_id)]
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> TransactionResponse:
 
     trx_db = session.exec(
-        select(Transaction)
-        .where(
-            Transaction.id == trx_id,
-            Transaction.user_id == user_id
+        select(Transaction).where(
+            Transaction.id == trx_id, Transaction.user_id == user_id
         )
     ).first()
     if not trx_db:
@@ -155,14 +148,12 @@ async def delete_transaction(
     trx_id: Annotated[int, Path],
     session: SessionDep,
     token: Annotated[str, Depends(oauth2_scheme)],
-    user_id: Annotated[str, Depends(get_current_user_id)]
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> TransactionDeleteResponse:
 
     transaction = session.exec(
-        select(Transaction)
-        .where(
-            Transaction.id == trx_id,
-            Transaction.user_id == user_id
+        select(Transaction).where(
+            Transaction.id == trx_id, Transaction.user_id == user_id
         )
     ).first()
     if not transaction:

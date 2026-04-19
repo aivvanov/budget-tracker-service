@@ -3,24 +3,13 @@ from pydantic import BaseModel
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
+
 
 class TokenData(BaseModel):
     email: str | None = None
 
 
-mock_users = {"alexatom": {
-                "email":"alex@gmail.com", 
-                "username":"alexatom", 
-                "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
-                "full_name":"Alex Ivanov", 
-                "disabled":False
-                },
-            "aprilluna": {
-                "email":"april@gmail.com", 
-                "username":"aprilluna",
-                "hashed_password":"$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
-                "full_name":"April Luna", 
-                "disabled":True
-            }
-}
+class RefreshRequest(BaseModel):
+    refresh_token: str

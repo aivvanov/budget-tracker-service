@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  budget-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budget-tracker-service
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+    volumes:
+      # Persistent database storaging
+      - ./data:/app/data
+      # In case DB in root of the project
+      - ./database.db:/app/database.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

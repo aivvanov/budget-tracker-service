@@ -4,8 +4,8 @@ from app.schemas.user import UserInDB
 from app.db.session import SessionDep
 from app.models.user import User
 
-
 password_hash = PasswordHash.recommended()
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify user's password"""
@@ -23,11 +23,13 @@ def get_user(session: SessionDep, email: str) -> User | None:
     user = session.exec(statement).first()
     return user
 
+
 def get_user_by_username(session: SessionDep, username: str) -> User | None:
     """Get a user from database by username"""
     statement = select(User).where(User.username == username)
     user = session.exec(statement).first()
     return user
+
 
 def authenticate_user(session: SessionDep, username: str, password: str) -> User | None:
     """Authenticate user using his password"""

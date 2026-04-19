@@ -16,21 +16,22 @@ def get_user_transactions(
     offset: int = 0,
     limit: int = None,
     date_from: datetime = None,
-    date_to: datetime = None
+    date_to: datetime = None,
 ) -> list[TransactionResponse]:
     transactions = session.exec(
         select(Transaction)
         .join(Category, Transaction.category_id == Category.id)
-        .where(Transaction.user_id == user_id,
+        .where(
+            Transaction.user_id == user_id,
             Transaction.created_at >= date_from,
             Transaction.created_at <= date_to,
-            Category.is_income == is_income
+            Category.is_income == is_income,
         )
         .offset(offset)
         .limit(limit)
     ).all()
 
-    return [t.model_dump(mode='json') for t in transactions]
+    return [t.model_dump(mode="json") for t in transactions]
 
 
 def get_user_total_income_in_default_currency(
@@ -39,31 +40,28 @@ def get_user_total_income_in_default_currency(
     default_currency: str,
     is_income: bool = None,
     date_from: datetime = None,
-    date_to: datetime = None
+    date_to: datetime = None,
 ) -> float | None:
     """Calculate the total income in the user's default currency"""
 
-    transactions = get_user_transactions(session, user_id, is_income, 0, None, date_from, date_to)
+    transactions = get_user_transactions(
+        session, user_id, is_income, 0, None, date_from, date_to
+    )
 
     total = 0.0
     for trx in transactions:
-        curr_amount = convert_currency(session, trx["amount"], trx["currency"], default_currency)
+        curr_amount = convert_currency(
+            session, trx["amount"], trx["currency"], default_currency
+        )
         total += curr_amount
 
     return total
 
 
 async def change_acc_balance(
-    account_id: str,
-    amount: float,
-    is_income: bool,
-    session: SessionDep
+    account_id: str, amount: float, is_income: bool, session: SessionDep
 ):
-    account = session.exec(
-        select(Account)
-        .where(
-            Account.id == account_id)
-        ).first()
+    account = session.exec(select(Account).where(Account.id == account_id)).first()
 
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")

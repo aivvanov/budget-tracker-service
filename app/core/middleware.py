@@ -24,5 +24,5 @@ def setup_cors(app):
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["X-Process-Time"], # custom header from add_process_time_header
+        expose_headers=["X-Process-Time"],  # custom header from add_process_time_header
     )

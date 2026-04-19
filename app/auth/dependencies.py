@@ -7,12 +7,13 @@ from app.schemas.user import UserBase
 from app.db.session import get_session
 from .schemas import TokenData
 from .security import oauth2_scheme
-from .security import ALGORITHM, SECRET_KEY
+from .security import ALGORITHM, ACCESS_SECRET_KEY
 from .service import get_user
+
 
 async def get_curr_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: Annotated[Session, Depends(get_session)]
+    session: Annotated[Session, Depends(get_session)],
 ):
     """Get current user from token"""
     credentials_exception = HTTPException(
@@ -21,25 +22,31 @@ async def get_curr_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, ACCESS_SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         if email is None:
             raise credentials_exception
         token_data = TokenData(email=email)
     except InvalidTokenError as exc:
         raise credentials_exception from exc
-    
+
     user = get_user(session, email)
     if user is None:
         raise credentials_exception
     return user
 
-async def get_current_user_id(current_user: Annotated[UserBase, Depends(get_curr_user)]) -> int:
+
+async def get_current_user_id(
+    current_user: Annotated[UserBase, Depends(get_curr_user)],
+) -> int:
     if not current_user.id:
         raise HTTPException(status_code=401, detail="Could not identify user")
     return current_user.id
 
-async def get_curr_active_user(current_user: Annotated[UserBase, Depends(get_curr_user)]):
+
+async def get_curr_active_user(
+    current_user: Annotated[UserBase, Depends(get_curr_user)],
+):
     """Get current active user"""
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
