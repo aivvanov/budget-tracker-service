@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class TransactionCreate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     amount: float
     category_id: int = Field(default=1, index=True)
@@ -12,7 +12,7 @@ class TransactionCreate(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     amount: float | None = Field(default=None)
     currency: str | None = Field(default=None)
@@ -36,4 +36,3 @@ class TransactionDeleteResponse(BaseModel):
     trx_id: int
     status: str = Field(default="success")
     message: str = Field(default="Transaction deleted successfully")
-

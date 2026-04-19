@@ -13,4 +13,3 @@ class Account(SQLModel, table=True):
     updated_at: datetime | None = Field(default=None)
 
     transactions: list["Transaction"] = Relationship(back_populates="account_rel")
-

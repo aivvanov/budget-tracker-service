@@ -9,19 +9,17 @@ async def validation_exception_handler(exc: ValidationException):
     return JSONResponse(
         status_code=406,
         content={
-            "detail":f"The field '{exc.field}' must be longer than {exc.min_length} characters"
+            "detail": f"The field '{exc.field}' must be longer than {exc.min_length} characters"
         },
     )
 
 
-async def common_parameters(q: str | None = None,
-                            skip: Annotated[int, 
-                                Query(deprecated = True,
-                                    title = 'Offset of lost')]
-                                = 0,
-                            limit: int = 10
-                            ):
-    """Return common query parameters as skip, limit etc."""
-    return {"q": q, "skip": skip, "limit": limit}
+# async def common_parameters(
+#     skip: Annotated[int, Query(deprecated=True, title="Offset of lost")] = 0,
+#     limit: int = 10,
+# ):
+#     """Return common query parameters as skip, limit etc."""
+#     return {"skip": skip, "limit": limit}
 
-CommonsDep = Annotated[dict, Depends(common_parameters)]
+
+# CommonsDep = Annotated[dict, Depends(common_parameters)]

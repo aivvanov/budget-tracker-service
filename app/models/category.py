@@ -10,6 +10,5 @@ class Category(SQLModel, table=True):
     user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime | None = Field(default=None)
-    
-    transactions: list["Transaction"] = Relationship(back_populates="category_rel")
 
+    transactions: list["Transaction"] = Relationship(back_populates="category_rel")

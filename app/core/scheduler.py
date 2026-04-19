@@ -6,6 +6,7 @@ from app.services.exchange_rate import fetch_and_save_rates
 
 scheduler = AsyncIOScheduler()
 
+
 async def job_fetch_rates():
     if db_session.engine is None:
         raise RuntimeError("Database engine not initialized yet")
@@ -14,6 +15,7 @@ async def job_fetch_rates():
             await fetch_and_save_rates(session)
         except Exception as e:
             print(f"[scheduler] Error while getting rates: {e}")
+
 
 def start_scheduler():
     scheduler.add_job(

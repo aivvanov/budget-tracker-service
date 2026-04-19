@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel, Field, ConfigDict #, HttpUrl
+from pydantic import BaseModel, Field, ConfigDict  # , HttpUrl
 from app.models.category import Category
-
 
 # class CategoryImage(BaseModel):
 #     # TO DO: create TypeDecorator for HttpUrl validation
@@ -10,19 +9,22 @@ from app.models.category import Category
 #     url: str = Field(default="https://example.com/icon.png")
 #     name: str
 
+
 class CategoryCreate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     name: str | None
     icon_url: str = Field(default="https://example.com/icon.png")
     is_income: bool | None
 
+
 class CategoryUpdate(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(default=None)
     icon_url: str = Field(default="https://example.com/icon.png")
     is_income: bool = Field(default=None)
+
 
 class CategoryResponse(BaseModel):
     id: int
@@ -32,10 +34,12 @@ class CategoryResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None
 
+
 class CategoryDeleteResponse(BaseModel):
     category_id: int
     status: str = Field(default="success")
     message: str = Field(default="Category deleted successfully")
+
 
 class CategoriesFilterParams(BaseModel):
     order_by: Literal["created_at", "updated_at"] = "created_at"
@@ -49,5 +53,5 @@ def db_to_category_response(category: Category) -> CategoryResponse:
         icon_url=category.icon_url,
         is_income=category.is_income,
         created_at=category.created_at,
-        updated_at=category.updated_at
+        updated_at=category.updated_at,
     )

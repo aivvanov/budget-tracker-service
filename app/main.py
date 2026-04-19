@@ -7,7 +7,8 @@ from .core.dependencies.validation import ValidationException
 from .core.dependencies.handlers import validation_exception_handler
 from .core.dependencies.dep import BaseDependancies
 from .auth import routes
-from .routers.v1 import transactions, categories, users, accounts, currency, analytics
+from .routers.v1 import transactions, categories, users, accounts, currencies, analytics
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
     print("[scheduler] stopped")
 
+
 app = FastAPI(lifespan=lifespan, dependencies=[Depends(BaseDependancies)])
 
 app.middleware("http")(add_process_time_header)
@@ -40,5 +42,5 @@ app.include_router(analytics.router)
 app.include_router(transactions.router)
 app.include_router(categories.router)
 app.include_router(accounts.router)
-app.include_router(currency.router)
+app.include_router(currencies.router)
 app.include_router(users.router)

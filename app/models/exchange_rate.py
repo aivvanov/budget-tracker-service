@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlmodel import SQLModel, Field
 
+
 class ExchangeRate(SQLModel, table=True):
     __tablename__ = "exchange_rates"
 
