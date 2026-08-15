@@ -13,3 +13,11 @@ class Account(SQLModel, table=True):
     updated_at: datetime | None = Field(default=None)
 
     transactions: list["Transaction"] = Relationship(back_populates="account_rel")
+    outgoing_transfers: list["Transfer"] = Relationship(
+        back_populates="from_account",
+        sa_relationship_kwargs={"foreign_keys": "[Transfer.from_account_id]"},
+    )
+    incoming_transfers: list["Transfer"] = Relationship(
+        back_populates="to_account",
+        sa_relationship_kwargs={"foreign_keys": "[Transfer.to_account_id]"},
+    )

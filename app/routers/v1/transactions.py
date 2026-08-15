@@ -32,8 +32,8 @@ async def get_transactions(
         select(Transaction)
         .where(
             Transaction.user_id == user_id,
-            Transaction.created_at >= commons.date_from,
-            Transaction.created_at <= commons.date_to,
+            Transaction.occurred_at >= commons.date_from,
+            Transaction.occurred_at <= commons.date_to,
         )
         .offset(commons.offset)
         .limit(commons.limit)
@@ -100,6 +100,7 @@ async def add_transaction(
         user_id=user_id,
         created_at=datetime.now(timezone.utc),
         updated_at=None,
+        occurred_at=transaction.occurred_at
     )
 
     session.add(db_transaction)
@@ -109,6 +110,7 @@ async def add_transaction(
     return db_transaction
 
 
+# TO DO: edit account balance after patching
 @router.patch("/{trx_id}")
 async def update_transaction(
     trx_id: Annotated[str, Path],
@@ -143,6 +145,7 @@ async def update_transaction(
     return trx_db
 
 
+# TO DO: return money to the account after deleting trx
 @router.delete("/{trx_id}")
 async def delete_transaction(
     trx_id: Annotated[int, Path],

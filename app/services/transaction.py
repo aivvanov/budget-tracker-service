@@ -23,8 +23,8 @@ def get_user_transactions(
         .join(Category, Transaction.category_id == Category.id)
         .where(
             Transaction.user_id == user_id,
-            Transaction.created_at >= date_from,
-            Transaction.created_at <= date_to,
+            Transaction.occurred_at >= date_from,
+            Transaction.occurred_at <= date_to,
             Category.is_income == is_income,
         )
         .offset(offset)
