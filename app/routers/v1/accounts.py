@@ -28,9 +28,7 @@ async def get_accounts(
     return session.exec(
         select(Account)
         .where(
-            Account.user_id == user_id,
-            Account.created_at >= commons.date_from,
-            Account.created_at <= commons.date_to,
+            Account.user_id == user_id
         )
         .offset(commons.offset)
         .limit(commons.limit)

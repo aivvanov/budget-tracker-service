@@ -32,9 +32,7 @@ async def get_categories(
     categories = session.exec(
         select(Category)
         .where(
-            Category.user_id == user_id,
-            Category.created_at >= commons.date_from,
-            Category.created_at <= commons.date_to,
+            Category.user_id == user_id
         )
         .offset(commons.offset)
         .limit(commons.limit)

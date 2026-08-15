@@ -1,4 +1,6 @@
 import json
+from datetime import datetime, timezone
+from fastapi import HTTPException
 from sqlmodel import select
 from app.models.account import Account
 from app.schemas.account import AccountResponse
@@ -31,3 +33,33 @@ def get_user_total_balance_in_default_currency(
         total += curr_amount
 
     return total
+
+
+def withdraw_from_account(session, user_id, account_id, amount) -> float | None:
+    account = session.exec(
+        select(Account).where(Account.user_id == user_id, Account.id == account_id)
+    ).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    account.amount = account.amount - amount
+    account.updated_at = datetime.now(timezone.utc)
+
+    session.add(account)
+
+    return account.amount
+
+
+def top_up_account(session, user_id, account_id, amount) -> float | None:
+    account = session.exec(
+        select(Account).where(Account.user_id == user_id, Account.id == account_id)
+    ).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    account.amount = account.amount + amount
+    account.updated_at = datetime.now(timezone.utc)
+
+    session.add(account)
+
+    return account.amount

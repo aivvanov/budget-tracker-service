@@ -9,6 +9,7 @@ class TransactionCreate(BaseModel):
     category_id: int = Field(default=1, index=True)
     account_id: int = Field(default=1, index=True)
     description: str | None = Field(default=None)
+    occurred_at: datetime | None
 
 
 class TransactionUpdate(BaseModel):
@@ -19,6 +20,7 @@ class TransactionUpdate(BaseModel):
     category_id: int | None = Field(default=None)
     account_id: int | None = Field(default=None)
     description: str | None = Field(default=None)
+    occurred_at: datetime | None = Field(default=None)
 
 
 class TransactionResponse(BaseModel):
@@ -30,7 +32,7 @@ class TransactionResponse(BaseModel):
     description: str | None
     created_at: datetime
     updated_at: datetime | None
-
+    occurred_at: datetime | None
 
 class TransactionDeleteResponse(BaseModel):
     trx_id: int

@@ -7,7 +7,7 @@ from .core.dependencies.validation import ValidationException
 from .core.dependencies.handlers import validation_exception_handler
 from .core.dependencies.dep import BaseDependancies
 from .auth import routes
-from .routers.v1 import transactions, categories, users, accounts, currencies, analytics
+from .routers.v1 import transactions, categories, users, accounts, currencies, analytics, transfers
 
 
 @asynccontextmanager
@@ -40,6 +40,7 @@ app.add_exception_handler(ValidationException, validation_exception_handler)
 app.include_router(routes.router)
 app.include_router(analytics.router)
 app.include_router(transactions.router)
+app.include_router(transfers.router)
 app.include_router(categories.router)
 app.include_router(accounts.router)
 app.include_router(currencies.router)
