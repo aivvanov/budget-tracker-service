@@ -1,20 +1,32 @@
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel, Field, ConfigDict  # , HttpUrl
+from enum import Enum
+from pydantic import BaseModel, Field, ConfigDict
 from app.models.category import Category
 
-# class CategoryImage(BaseModel):
-#     # TO DO: create TypeDecorator for HttpUrl validation
-#     #url: HttpUrl = Field(default="https://example.com/icon.png")
-#     url: str = Field(default="https://example.com/icon.png")
-#     name: str
+
+class CategoryImageKey(str, Enum):
+    GROCERIES = "groceries"
+    TRANSPORTATION = "transportation"
+    HOME = "home"
+    HEALTH = "health"
+    LEISURE = "leisure"
+    CAFE = "cafe"
+    EDUCATION = "education"
+    GIFTS = "gifts"
+    FAMILY = "family"
+    WORKOUT = "workout"
+    OTHER = "other"
+    SUBSCRIPTIONS = "subscriptions"
+    PAYCHECK = "paycheck"
+    INTEREST = "interest"
 
 
 class CategoryCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str | None
-    icon_url: str = Field(default="https://example.com/icon.png")
+    icon_key: CategoryImageKey | None
     is_income: bool | None
 
 
@@ -22,14 +34,14 @@ class CategoryUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(default=None)
-    icon_url: str = Field(default="https://example.com/icon.png")
+    icon_key: CategoryImageKey | None
     is_income: bool = Field(default=None)
 
 
 class CategoryResponse(BaseModel):
     id: int
     name: str
-    icon_url: str
+    icon_key: CategoryImageKey | None
     is_income: bool
     created_at: datetime
     updated_at: datetime | None
@@ -50,7 +62,7 @@ def db_to_category_response(category: Category) -> CategoryResponse:
     return CategoryResponse(
         id=category.id,
         name=category.name,
-        icon_url=category.icon_url,
+        icon_key=category.icon_key,
         is_income=category.is_income,
         created_at=category.created_at,
         updated_at=category.updated_at,

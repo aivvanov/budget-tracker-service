@@ -42,8 +42,8 @@ async def get_transfers(
         select(Transfer)
         .where(
             Transfer.user_id == user_id,
-            Transfer.created_at >= commons.date_from,
-            Transfer.created_at <= commons.date_to,
+            Transfer.occurred_at >= commons.date_from,
+            Transfer.occurred_at <= commons.date_to,
         )
         .offset(commons.offset)
         .limit(commons.limit)
