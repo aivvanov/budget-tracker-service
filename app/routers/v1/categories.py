@@ -79,7 +79,7 @@ async def add_category(
 
     db_category = Category(
         name=category.name,
-        icon_url=category.icon_url,
+        icon_key=category.icon_key,
         is_income=category.is_income,
         user_id=user_id,
     )
@@ -110,7 +110,7 @@ async def update_category(
 
     category_data = category.model_dump(exclude_unset=True, exclude=None)
     category_db.updated_at = datetime.now(timezone.utc)
-    category_db.icon_url = category.icon_url
+    category_db.icon_key = category.icon_key
     category_db.sqlmodel_update(category_data)
 
     session.add(category_db)
